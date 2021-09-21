@@ -273,5 +273,497 @@ public class ICD10CMCodesManipulator {
         }
     }
 
+    /**
+     * Private method used to add the dot to a code without having to check whether the code is valid.
+     */
+    private String addDotToCode(String code){
+        if(code.length()<4 || code.charAt(3)=='.'){
+            return code;
+        } else if(codeToNode.containsKey(code.substring(0,3)+"."+code.substring(3))){
+            return code.substring(0,3)+"."+code.substring(3);
+        } else {
+            return code;
+        }
+    }
 
+    /**
+     * It checks whether a String is a valid chapter, block, category or subcategory in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM code, otherwise false
+     */
+    public boolean isValidItem(String code){
+        return codeToNode.containsKey(code) || code.length()>=4 && codeToNode.containsKey(code.substring(0,3)+"."+code.substring(3));
+    }
+
+    /**
+     * It checks whether a String is a valid chapter in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM chapter, otherwise false
+     */
+    public boolean isChapter(String code){
+        code = addDotToCode(code);
+        if (codeToNode.containsKey(code)){
+            return codeToNode.get(code).type.equals("chapter");
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * It checks whether a String is a valid block in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM block, otherwise false
+     */
+    public boolean isBlock(String code){
+        code = addDotToCode(code);
+        if (codeToNode.containsKey(code)){
+            return codeToNode.get(code).type.equals("block") || (codeToNode.get(code).parent!=null && codeToNode.get(code).parent.name.equals(code));//second half of the or is for sections containing a single category
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * It checks whether a String is a valid category in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM category, otherwise false
+     */
+    public boolean isCategory(String code){
+        code = addDotToCode(code);
+        if (codeToNode.containsKey(code)){
+            return codeToNode.get(code).type.equals("category");
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * It checks whether a String is a valid subcategory in ICD-10-CM.
+     * By changing the value of includeExtendedSubcategories, it's possible to chose whether valid subcategories obtained by adding the 7th character to another code are included or not.
+     *
+     * @param code is the String that must be checked
+     * @param includeExtendedSubcategories when it's true valid subcategories obtained by adding the 7th character to another code are considered as subcategories, otherwise they are not
+     * @return true if code is a valid ICD-10-CM subcategory, otherwise false
+     */
+    public boolean isSubcategory(String code, boolean includeExtendedSubcategories){
+        code = addDotToCode(code);
+        if (codeToNode.containsKey(code)){
+            return codeToNode.get(code).type.equals("subcategory") || (codeToNode.get(code).type.equals("extended subcategory") && includeExtendedSubcategories);
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * It checks whether a String is a valid subcategory in ICD-10-CM.
+     * Valid subcategories obtained by adding the 7th character to another code are always included.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM subcategory, otherwise false
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a>
+     */
+    public boolean isSubcategory(String code){
+        return isSubcategory(code,true);
+    }
+
+    /**
+     * It checks whether a String is a valid subcategory obtained by adding the 7th character to another code in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM subcategory, otherwise false
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> and <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#about-the-special-seventh-character">About the special seventh character</a>
+     */
+    public boolean isExtendedSubcategory(String code){
+        code = addDotToCode(code);
+        if (codeToNode.containsKey(code)){
+            return codeToNode.get(code).type.equals("extended subcategory");
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * It checks whether a String is a valid chapter or block in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM chapter or block, otherwise false
+     */
+    public boolean isChapterOrBlock(String code){
+        return isBlock(code)||isChapter(code);
+    }
+
+    /**
+     * It checks whether a String is a valid category or subcategory in ICD-10-CM.
+     *
+     * @param code is the String that must be checked
+     * @return true if code is a valid ICD-10-CM category or subcategory, otherwise false
+     */
+    public boolean isCategoryOrSubcategory(String code){
+        return isCategory(code)||isSubcategory(code);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns the description of said code.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return the description of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getDescription(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            return node.parent.description;
+        } else {
+            return node.description;
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns the description of said code.
+     * Version of getDescription where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return the description of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getDescription(String code) throws IllegalArgumentException{
+        return getDescription(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code.
+     * If this code does not have an "excludes1" field, it returns an empty ArrayList&lt;String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes1" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getExcludes1(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(node.excludes1==null){
+            return new ArrayList<String>();
+        } else {
+            return (ArrayList<String>) node.excludes1.clone();
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code.
+     * If this code does not have an "excludes1" field, it returns an empty ArrayList&lt;String&gt;.
+     * Version of getExcludes1 where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes1" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getExcludes1(String code) throws IllegalArgumentException{
+        return getExcludes1(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code.
+     * If this code does not have an "excludes2" field, it returns an empty ArrayList&lt;String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes2" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getExcludes2(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(node.excludes2==null){
+            return new ArrayList<String>();
+        } else {
+            return (ArrayList<String>) node.excludes2.clone();
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code.
+     * If this code does not have an "excludes2" field, it returns an empty ArrayList&lt;String&gt;.
+     * Version of getExcludes2 where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes2" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getExcludes2(String code) throws IllegalArgumentException{
+        return getExcludes2(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "includes" field of this code.
+     * If this code does not have an "includes" field, it returns an empty ArrayList&lt;String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the data of the "includes" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "includes" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getIncludes(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(node.includes==null){
+            return new ArrayList<String>();
+        } else {
+            return (ArrayList<String>) node.includes.clone();
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "includes" field of this code.
+     * If this code does not have an "includes" field, it returns an empty ArrayList&lt;String&gt;.
+     * Version of getIncludes where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the data of the "includes" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "includes" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public ArrayList<String> getIncludes(String code) throws IllegalArgumentException{
+        return getIncludes(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code.
+     * If this code does not have an "inclusionTerm" field, it returns an empty ArrayList&lt;String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "inclusionTerm" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getInclusionTerm(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(node.inclusionTerm==null){
+            return new ArrayList<String>();
+        } else {
+            return (ArrayList<String>) node.inclusionTerm.clone();
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code.
+     * If this code does not have an "inclusionTerm" field, it returns an empty ArrayList&lt;String&gt;.
+     * Version of getInclusionTerm where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "inclusionTerm" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getInclusionTerm(String code) throws IllegalArgumentException{
+        return getInclusionTerm(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "sevenChrNote" field of this code.
+     * If this code does not have an "sevenChrNote" field, it returns an empty String.
+     *
+     * @param code is the ICD-10-CM code
+     * @param searchInAncestors if it's set to true, if the given code doesn't have a "sevenChrNote" field but one of its ancestor does, the "sevenChrNote" data of the closer ancestor that contains such a field is returned
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return a String containing the data of the "sevenChrNote" field of this code, an empty String if this code does not have an "sevenChrNote" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> and <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#about-the-special-seventh-character">About the special seventh character</a> to learn more about the meaning of this field
+     */
+    public String getSevenChrNote(String code,boolean searchInAncestors, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(searchInAncestors && node.sevenChrNote.equals("") && node.sevenChrNoteAncestor!=null){
+            return node.sevenChrNoteAncestor.sevenChrNote;
+        } else {
+            return node.sevenChrNote;
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "sevenChrNote" field of this code.
+     * If this code does not have an "sevenChrNote" field, it returns an empty String.
+     * Version of getSevenChrNote where the parameters searchInAncestors and prioritizeBlocks are implicitly false.
+     * Please see {@link #getSevenChrNote(String, boolean, boolean)} for the meaning of the missing parameters.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a String containing the data of the "sevenChrNote" field of this code, an empty String if this code does not have an "sevenChrNote" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> and <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#about-the-special-seventh-character">About the special seventh character</a> to learn more about the meaning of this field
+     */
+    public String getSevenChrNote(String code) throws IllegalArgumentException{
+        return getSevenChrNote(code,false,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code.
+     * If this code does not have an "sevenChrDef" field, it returns an empty HashMap&lt;String, String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param searchInAncestors if it's set to true, if the given code doesn't have a "sevenChrDef" field but one of its ancestor does, the "sevenChrDef" data of the closer ancestor that contains such a field is returned
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code, an empty HashMap&lt;String, String&gt; if this code does not have an "sevenChrDef" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> and <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#about-the-special-seventh-character">About the special seventh character</a> to learn more about the meaning of this field
+     */
+    public HashMap<String, String> getSevenChrDef(String code,boolean searchInAncestors, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        HashMap<String, String> result;
+        if(searchInAncestors && node.sevenChrDef==null && node.sevenChrDefAncestor!=null){
+            result = node.sevenChrDefAncestor.sevenChrDef;
+        } else {
+            result = node.sevenChrDef;
+        }
+        if(result==null){
+            return new HashMap<>();
+        } else {
+            return (HashMap<String, String>) result.clone();
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code.
+     * If this code does not have an "sevenChrDef" field, it returns an empty HashMap&lt;String, String&gt;.
+     * Version of getSevenChrDef where the parameters searchInAncestors and prioritizeBlocks are implicitly false.
+     * Please see {@link #getSevenChrDef(String, boolean, boolean)} for the meaning of the missing parameters.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code, an empty HashMap&lt;String, String&gt; if this code does not have an "sevenChrDef" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> and <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#about-the-special-seventh-character">About the special seventh character</a> to learn more about the meaning of this field
+     */
+    public HashMap<String, String> getSevenChrDef(String code) throws IllegalArgumentException{
+        return getSevenChrDef(code,false,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "useAdditionalCode" field of this code.
+     * If this code does not have an "useAdditionalCode" field, it returns an empty String.
+     *
+     * @param code is the ICD-10-CM code
+     * @param searchInAncestors if it's set to true, if the given code doesn't have a "useAdditionalCode" field but one of its ancestor does, the "useAdditionalCode" data of the closer ancestor that contains such a field is returned
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return a String containing the data of the "useAdditionalCode" field of this code, an empty String if this code does not have an "useAdditionalCode" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public String getUseAdditionalCode(String code,boolean searchInAncestors, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(searchInAncestors && node.useAdditionalCode.equals("") && node.useAdditionalCodeAncestor!=null){
+            return node.useAdditionalCodeAncestor.useAdditionalCode;
+        } else {
+            return node.useAdditionalCode;
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "useAdditionalCode" field of this code.
+     * If this code does not have an "useAdditionalCode" field, it returns an empty String.
+     * Version of getUseAdditionalCode where the parameters searchInAncestors and prioritizeBlocks are implicitly false.
+     * Please see {@link #getUseAdditionalCode(String, boolean, boolean)} for the meaning of the missing parameters.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a String containing the data of the "useAdditionalCode" field of this code, an empty String if this code does not have an "useAdditionalCode" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public String getUseAdditionalCode(String code) throws IllegalArgumentException{
+        return getUseAdditionalCode(code,false,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "codeFirst" field of this code.
+     * If this code does not have an "codeFirst" field, it returns an empty String.
+     *
+     * @param code is the ICD-10-CM code
+     * @param searchInAncestors if it's set to true, if the given code doesn't have a "codeFirst" field but one of its ancestor does, the "codeFirst" data of the closer ancestor that contains such a field is returned
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return a String containing the data of the "codeFirst" field of this code, an empty String if this code does not have an "codeFirst" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public String getCodeFirst(String code,boolean searchInAncestors, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(searchInAncestors && node.codeFirst.equals("") && node.codeFirstAncestor!=null){
+            return node.codeFirstAncestor.codeFirst;
+        } else {
+            return node.codeFirst;
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "codeFirst" field of this code.
+     * If this code does not have an "codeFirst" field, it returns an empty String.
+     * Version of getCodeFirst where the parameters searchInAncestors and prioritizeBlocks are implicitly false.
+     * Please see {@link #getCodeFirst(String, boolean, boolean)} for the meaning of the missing parameters.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a String containing the data of the "codeFirst" field of this code, an empty String if this code does not have an "codeFirst" field
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     * @see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/blob/master/Instructional%20Notations.md">Instructional Notations</a> to learn more about the meaning of this field
+     */
+    public String getCodeFirst(String code) throws IllegalArgumentException{
+        return getCodeFirst(code,false,false);
+    }
 }
