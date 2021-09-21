@@ -766,4 +766,459 @@ public class ICD10CMCodesManipulator {
     public String getCodeFirst(String code) throws IllegalArgumentException{
         return getCodeFirst(code,false,false);
     }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing all the available data of the code.
+     * The empty fields are omitted from the String, except for the list of children.
+     *
+     * @param code is the ICD-10-CM code
+     * @param searchInAncestors if it's set to true, if the given code doesn't have a certain field but one of its ancestor does, the data of the closer ancestor that contains such a field is returned
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return  a String containing all the available data of the code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getFullData(String code,boolean searchInAncestors, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        StringBuilder result = new StringBuilder();
+        result.append("Name:\n").append(node.name).append("\nDescription:\n").append(node.description);
+        if(node.parent!=null){
+            result.append("\nParent:\n").append(node.parent.name);
+        }
+        if(node.excludes1!=null){
+            result.append("\nexcludes1:");
+            for(String item: node.excludes1){
+                result.append("\n").append(item);
+            }
+        }
+        if(node.excludes2!=null){
+            result.append("\nexcludes2:");
+            for(String item: node.excludes2){
+                result.append("\n").append(item);
+            }
+        }
+        if(node.includes!=null){
+            result.append("\nincludes:");
+            for(String item: node.includes){
+                result.append("\n").append(item);
+            }
+        }
+        if(node.inclusionTerm!=null){
+            result.append("\ninclusion term:");
+            for(String item: node.inclusionTerm){
+                result.append("\n").append(item);
+            }
+        }
+        String sevenChrNote=getSevenChrNote(code,searchInAncestors,prioritizeBlocks);
+        if(!sevenChrNote.equals("")){
+            result.append("\nseven chr note:\n").append(sevenChrNote);
+        }
+        HashMap<String,String> sevenChrDef = getSevenChrDef(code,searchInAncestors,prioritizeBlocks);
+        if(!sevenChrDef.isEmpty()){
+            result.append("\nseven chr def:");
+            for(Map.Entry<String,String> item: sevenChrDef.entrySet()){
+                result.append("\n").append(item.getKey()).append(":\t").append(item.getValue());
+            }
+        }
+        String useAdditionalCode=getUseAdditionalCode(code,searchInAncestors,prioritizeBlocks);
+        if(!useAdditionalCode.equals("")){
+            result.append("\nuse additional code:\n").append(useAdditionalCode);
+        }
+        String codeFirst=getCodeFirst(code,searchInAncestors,prioritizeBlocks);
+        if(!codeFirst.equals("")){
+            result.append("\ncode first::\n").append(codeFirst);
+        }
+        if(node.children.size()==0){
+            result.append("\nChildren:\nNone--");
+        } else {
+            result.append("\nChildren:\n");
+            for(ICDNode child: node.children){
+                result.append(child.name).append(", ");
+            }
+        }
+        return result.substring(0,result.length()-2);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing all the available data of the code.
+     * The empty fields are omitted from the String, except for the list of children.
+     * Version of getFullData where the parameters searchInAncestors and prioritizeBlocks are implicitly false.
+     * Please see {@link #getFullData(String, boolean, boolean)} for the meaning of the missing parameters.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a String containing all the available data of the code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getFullData(String code) throws IllegalArgumentException{
+        return getFullData(code,false,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing its parent in the ICD-10-CM classification.
+     * If the code doesn't have a parent (that is, if it's a chapter), it returns an empty String.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return a String containing the parent of the code, or an empty String if it does not have a parent
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getParent(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        if(node.parent==null){
+            return "";
+        } else {
+            return node.parent.name;
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns a String containing its parent in the ICD-10-CM classification.
+     * If the code doesn't have a parent (that is, if it's a chapter), it returns an empty String.
+     * Version of getParent where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return a String containing the parent of the code, or an empty String if it does not have a parent
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String getParent(String code) throws IllegalArgumentException{
+        return getParent(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing its children in the ICD-10-CM classification.
+     * If the code doesn't have any children, it returns an empty ArrayList&lt;String&gt;.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; of strings containing its children, or an empty ArrayList&lt;String&gt; if it does not have any children
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getChildren(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        ArrayList<String> result = new ArrayList<>();
+        for(ICDNode child: node.children){
+            result.add(child.name);
+        }
+        return result;
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing its children in the ICD-10-CM classification.
+     * If the code doesn't have any children, it returns an empty ArrayList&lt;String&gt;.
+     * Version of getParent where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; of strings containing its children, or an empty ArrayList&lt;String&gt; if it does not have any children
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getChildren(String code) throws IllegalArgumentException{
+        return getChildren(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its ancestors in the ICD-10-CM classification.
+     * The results are ordered from its parent to its most distant ancestor.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the ancestors of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getAncestors(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        ArrayList<String> result = new ArrayList<>();
+        while (node.parent!=null){
+            result.add(node.parent.name);
+            node=node.parent;
+        }
+        return result;
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its ancestors in the ICD-10-CM classification.
+     * The results are ordered from its parent to its most distant ancestor.
+     * Version of getAncestors where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the ancestors of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getAncestors(String code) throws IllegalArgumentException{
+        return getAncestors(code,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its descendants in the ICD-10-CM classification.
+     * The returned codes are ordered as in a pre-order depth-first traversal of the tree containing the ICD-10-CM classification.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return an ArrayList&lt;String&gt; containing the descendants of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getDescendants(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        ArrayList<String> result = new ArrayList<>();
+        addChildrenToList(node,result);
+        return result;
+    }
+
+    /**
+     * Private method that adds an ICDNode and its children (their String representations) to a list.
+     */
+    private void addChildrenToList(ICDNode node, ArrayList<String> list){
+        for(ICDNode child: node.children){
+            list.add(child.name);
+            addChildrenToList(child,list);
+        }
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its descendants in the ICD-10-CM classification.
+     * The returned codes are ordered as in a pre-order depth-first traversal of the tree containing the ICD-10-CM classification.
+     * Version of getDescendants where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return an ArrayList&lt;String&gt; containing the descendants of code
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public ArrayList<String> getDescendants(String code) throws IllegalArgumentException{
+        return getDescendants(code,false);
+    }
+
+    /**
+     * It checks whether a code (a) is one of the ancestors of another code (b). A code is never an ancestor of itself.
+     *
+     * @param a is the code that may or may not be an ancestor of b
+     * @param b is the code that whose ancestors could include a
+     * @param prioritizeBlocksA prioritizeBlocks referred to the code in a, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @param prioritizeBlocksB prioritizeBlocks referred to the code in b, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return true if a is one of the ancestors of b, false otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public boolean isAncestor(String a, String b, boolean prioritizeBlocksA, boolean prioritizeBlocksB) throws IllegalArgumentException{
+        if(!isValidItem(a)){
+            throw new IllegalArgumentException("\""+a+"\" is not a valid ICD-10 code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(a));
+        if (prioritizeBlocksA && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        return getAncestors(b,prioritizeBlocksB).contains(a) && (!a.equals(b) || prioritizeBlocksA);
+    }
+
+    /**
+     * It checks whether a code (a) is one of the ancestors of another code (b). A code is never an ancestor of itself.
+     * Version of isAncestor where the parameters prioritizeBlocksA and prioritizeBlocksB are implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameters.
+     *
+     * @param a is the code that may or may not be an ancestor of b
+     * @param b is the code that whose ancestors could include a
+     * @return true if a is one of the ancestors of b, false otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public boolean isAncestor(String a, String b) throws IllegalArgumentException{
+        return isAncestor(a,b,false,false);
+    }
+
+    /**
+     * It checks whether a code (a) is one of the descendants of another code (b). A code is never a descendant of itself.
+     *
+     * @param a is the code that may or may not be a descendant of b
+     * @param b is the code that whose descendants could include a
+     * @param prioritizeBlocksA prioritizeBlocks referred to the code in a, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @param prioritizeBlocksB prioritizeBlocks referred to the code in b, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return true if a is one of the descendants of b, false otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public boolean isDescendant(String a, String b, boolean prioritizeBlocksA, boolean prioritizeBlocksB) throws IllegalArgumentException{
+        return isAncestor(b,a,prioritizeBlocksB,prioritizeBlocksA);
+    }
+
+    /**
+     * It checks whether a code (a) is one of the descendants of another code (b). A code is never a descendant of itself.
+     * Version of isDescendant where the parameters prioritizeBlocksA and prioritizeBlocksB are implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameters.
+     *
+     * @param a is the code that may or may not be a descendant of b
+     * @param b is the code that whose descendants could include a
+     * @return true if a is one of the descendants of b, false otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public boolean isDescendant(String a, String b) throws IllegalArgumentException{
+        return isDescendant(a,b,false,false);
+    }
+
+    /**
+     * Given two ICD-10-CM codes a and b, it returns their nearest common ancestor in the ICD-10-CM classification (or an empty string if they don't have a nearest common ancestor).
+     *
+     * @param a is an ICD-10-CM code
+     * @param b is an ICD-10-CM code
+     * @param prioritizeBlocksA prioritizeBlocks referred to the code in a, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @param prioritizeBlocksB prioritizeBlocks referred to the code in b, please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return the nearest common ancestor of a and b if it exists, an empty string otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public String getNearestCommonAncestor(String a, String b, boolean prioritizeBlocksA, boolean prioritizeBlocksB) throws IllegalArgumentException{
+        ArrayList<String> ancestorsA = getAncestors(a, prioritizeBlocksA);
+        ancestorsA.add(0,addDotToCode(a));
+        ArrayList<String> ancestorsB = getAncestors(b, prioritizeBlocksB);
+        ancestorsB.add(0,addDotToCode(b));
+        if(ancestorsB.size()>ancestorsA.size()){
+            ArrayList<String> temp = ancestorsA;
+            ancestorsA = ancestorsB;
+            ancestorsB = temp;
+        }
+        for(String ancestor: ancestorsA){
+            if (ancestorsB.contains(ancestor)){
+                return ancestor;
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Given two ICD-10-CM codes a and b, it returns their nearest common ancestor in the ICD-10-CM classification (or an empty string if they don't have a nearest common ancestor).
+     * Version of getNearestCommonAncestor where the parameters prioritizeBlocksA and prioritizeBlocksB are implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameters.
+     *
+     * @param a is an ICD-10-CM code
+     * @param b is an ICD-10-CM code
+     * @return the nearest common ancestor of a and b if it exists, an empty string otherwise
+     * @throws IllegalArgumentException if a or b are not a valid ICD-10-CM code
+     */
+    public String getNearestCommonAncestor(String a, String b) throws IllegalArgumentException{
+        return  getNearestCommonAncestor(a,b,false,false);
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it checks whether that code is a leaf in the ICD-10 classification.
+     *
+     * @param code is the ICD-10-CM code
+     * @param prioritizeBlocks please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a>
+     * @return true if code is a leaf in the ICD-10-CM classification (that is, if it has no children), false otherwise
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public boolean isLeaf(String code, boolean prioritizeBlocks) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        ICDNode node = codeToNode.get(addDotToCode(code));
+        if (prioritizeBlocks && node.parent!=null && node.parent.name.equals(node.name)){
+            node = node.parent;
+        }
+        return node.children.size()==0;
+    }
+
+    /**
+     * Given a String that contains an ICD-10-CM code, it checks whether that code is a leaf in the ICD-10 classification.
+     * Version of isLeaf where the parameter prioritizeBlocks is implicitly false.
+     * Please see <a href="https://github.com/StefanoTrv/SimpleICD10CM-Java-edition#blocks-containing-only-one-category">Blocks containing only one category</a> for the meaning of the missing parameter.
+     *
+     * @param code is the ICD-10-CM code
+     * @return true if code is a leaf in the ICD-10-CM classification (that is, if it has no children), false otherwise
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public boolean isLeaf(String code) throws IllegalArgumentException{
+        return isLeaf(code,false);
+    }
+
+    /**
+     * It returns an ArrayList&lt;String&gt; that contains all the codes in the ICD-10-CM classification, ordered as in a depth-first pre-order visit.
+     *
+     * @param withDots is a boolean that controls whether the codes in the list that is returned are in the format with or without the dot.
+     * @return the list of all the codes in the ICD-10-CM classification, ordered as in a depth-first pre-order visit, in the format with the dot if withDots is true, in the format without the dot otherwise
+     */
+    public ArrayList<String> getAllCodes(boolean withDots){
+        if (withDots){
+            return (ArrayList<String>) allCodesList.clone();
+        } else {
+            return (ArrayList<String>) allCodesListNoDots.clone();
+        }
+    }
+
+    /**
+     * It returns an ArrayList&lt;String&gt; that contains all the codes in the ICD-10-CM classification, ordered as in a depth-first pre-order visit.
+     *
+     * @return the list of all the codes in the ICD-10-CM classification, ordered as in a depth-first pre-order visit, in the format with the dot
+     */
+    public ArrayList<String> getAllCodes(){
+        return getAllCodes(true);
+    }
+
+    /**
+     * It returns the index of a particular code in the list returned by getAllCodes.
+     *
+     * @param code is the code whose index we want to find
+     * @return the index of code in the list returned by getAllCodes
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public int getIndex(String code) throws IllegalArgumentException{
+        if(!isValidItem(code)){
+            throw new IllegalArgumentException("\""+code+"\" is not a valid ICD-10-CM code.");
+        }
+        code = addDotToCode(code);
+        if (codeToIndexMap.containsKey(code)){
+            return codeToIndexMap.get(code);
+        } else {
+            int i = allCodesList.indexOf(code);
+            codeToIndexMap.put(code,i);
+            return i;
+        }
+    }
+
+    /**
+     * Given an ICD-10-CM code, it returns the same code in the format without the dot.
+     *
+     * @param code is an ICD-10-CM code
+     * @return the same code in the format without the dot
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String removeDot(String code) throws IllegalArgumentException{
+        return allCodesListNoDots.get(getIndex(code));
+    }
+
+    /**
+     * Given an ICD-10-CM code, it returns the same code in the format with the dot.
+     *
+     * @param code is an ICD-10-CM code
+     * @return the same code in the format with the dot
+     * @throws IllegalArgumentException if code is not a valid ICD-10-CM code
+     */
+    public String addDot(String code) throws IllegalArgumentException{
+        return allCodesList.get(getIndex(code));
+    }
 }
