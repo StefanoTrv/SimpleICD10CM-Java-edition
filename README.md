@@ -4,6 +4,7 @@ A simple Java library for ICD-10-CM codes
 ## Index
 * [Release notes](#release-notes)
 * [Introduction](#introduction)
+* [Setup](#setup)
 * [The format of the codes](#the-format-of-the-codes)
 * [About the file "Instructional Notations.md"](#about-the-file-instructional-notationsmd)
 * [Blocks containing only one category](#blocks-containing-only-one-category)
