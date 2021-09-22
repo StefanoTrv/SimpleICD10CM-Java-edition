@@ -17,12 +17,6 @@ public class ICD10CMCodesManipulator {
     private ArrayList<String> allCodesListNoDots;
     private HashMap<String, Integer> codeToIndexMap;
 
-    public static void main(String[] args) throws IOException, ParseException {
-        ICD10CMCodesManipulator cm = new ICD10CMCodesManipulator();
-        //System.out.println(cm.getAllCodes().toString());
-        System.out.println(cm.getAllCodes(false).toString());
-    }
-
     /**
      * The constructor that reads the data from the xml file to load all the data relative to the ICD-10-CM classification.
      */
