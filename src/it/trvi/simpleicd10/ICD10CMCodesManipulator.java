@@ -18,7 +18,9 @@ public class ICD10CMCodesManipulator {
     private HashMap<String, Integer> codeToIndexMap;
 
     public static void main(String[] args) throws IOException, ParseException {
-        ICD10CMCodesManipulator c = new ICD10CMCodesManipulator();
+        ICD10CMCodesManipulator cm = new ICD10CMCodesManipulator();
+        //System.out.println(cm.getAllCodes().toString());
+        System.out.println(cm.getAllCodes(false).toString());
     }
 
     /**
@@ -128,6 +130,7 @@ public class ICD10CMCodesManipulator {
                         for(XMLElement note: subtree.getAllChildren()){
                             this.excludes1.add(note.getTextContent());
                         }
+                        break;
 
                     case "excludes2":
                         if(this.excludes2==null){
@@ -216,7 +219,7 @@ public class ICD10CMCodesManipulator {
                     break;
 
                 case "diag":
-                    if(tree.getTagName().length()==3){
+                    if(this.name.length()==3){
                         this.type="category";
                     }else{
                         this.type="subcategory";
@@ -320,7 +323,7 @@ public class ICD10CMCodesManipulator {
     public boolean isBlock(String code){
         code = addDotToCode(code);
         if (codeToNode.containsKey(code)){
-            return codeToNode.get(code).type.equals("block") || (codeToNode.get(code).parent!=null && codeToNode.get(code).parent.name.equals(code));//second half of the or is for sections containing a single category
+            return codeToNode.get(code).type.equals("section") || (codeToNode.get(code).parent!=null && codeToNode.get(code).parent.name.equals(code));//second half of the or is for sections containing a single category
         }else{
             return false;
         }
