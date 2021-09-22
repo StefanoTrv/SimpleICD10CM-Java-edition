@@ -9,10 +9,7 @@ A simple Java library for ICD-10-CM codes
 * [About the file "Instructional Notations.md"](#about-the-file-instructional-notationsmd)
 * [Blocks containing only one category](#blocks-containing-only-one-category)
 * [About the special seventh character](#about-the-special-seventh-character)
-* [Documentation](#documentation)
-  <details>
-  <summary>Click to expand</summary>
-  
+* [Documentation](#documentation)  
   * [ICD10CMCodesManipulator()](#icd10cmcodesmanipulator)
   * [boolean isValidItem(String code)](#boolean-isvaliditemstring-code)
   * [boolean isChapter(String code)](#boolean-ischapterstring-code)
@@ -64,8 +61,6 @@ A simple Java library for ICD-10-CM codes
   * [int getIndex(String code)](#int-getindexstring-code)
   * [String removeDot(String code)](#string-removedotstring-code)
   * [String addDot(String code)](#string-adddotstring-code)
-</details>
-
 * [Conclusion](#conclusion)
 
 ## Release notes
