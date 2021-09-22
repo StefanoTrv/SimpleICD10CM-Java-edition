@@ -73,7 +73,7 @@ If you are looking for a Python version of this project, you can check the [simp
 
 The data used in this library was taken from the websites of the CDC and of the CMS. This library currently uses the **January 2021 release of ICD-10-CM**.
 
-All the classes in this library are contained in the package "`it.trvi.simpleicd10`".
+All the classes in this library are contained in the package "`it.trvi.simpleicd10cm`".
 
 ## Setup
 You can download the jar containing the most recent recent version of this library from the [releases page on Github](https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/releases).
@@ -115,7 +115,7 @@ If you need to know whether a code has been automatically generated using a rule
 
 ## Documentation
 This library is comprised of a single class, ICD10CMCodesManipulator. When an object of this class is instantiated, it loads all the relevant data and creates the appropriate data structures to work effectively with it. It's through these objects that the functionalities of this library can be accessed.  
-This class is contained in the package "`it.trvi.simpleicd10`".
+This class is contained in the package "`it.trvi.simpleicd10cm`".
 ```Java
 ICD10CMCodesManipulator cm = new ICD10CMCodesManipulator();
 ```
