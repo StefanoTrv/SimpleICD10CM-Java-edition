@@ -123,6 +123,9 @@ ICD10CMCodesManipulator cm = new ICD10CMCodesManipulator();
 
 ### ICD10CMCodesManipulator()
 The constructor that reads the data from the XML file to load all the data relative to the ICD-10-CM classification.
+```Java
+ICD10CMCodesManipulator cm = new ICD10CMCodesManipulator();
+```
 
 ### boolean isValidItem(String code)
 It checks whether a String is a valid chapter, block, category or subcategory in ICD-10-CM.
@@ -131,6 +134,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM code, otherwise false
+```Java
+cm.isValidItem("cat")
+//false
+cm.isValidItem("B99")
+//true
+```
 
 ### boolean isChapter(String code)
 It checks whether a String is a valid chapter in ICD-10-CM.
@@ -139,6 +148,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM chapter, otherwise false
+```Java
+cm.isChapter("12")
+//true
+cm.isChapter("B99")
+//false
+```
 
 ### boolean isBlock(String code)
 It checks whether a String is a valid block in ICD-10-CM.
@@ -147,6 +162,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM block, otherwise false
+```Java
+cm.isBlock("L80-L99")
+//true
+cm.isBlock("L99")
+//false
+```
 
 ### boolean isCategory(String code)
 It checks whether a String is a valid category in ICD-10-CM.
@@ -155,6 +176,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM category, otherwise false
+```Java
+cm.isCategory("B99")
+//true
+cm.isCategory("14")
+//false
+```
 
 ### boolean isSubcategory(String code, boolean includeExtendedSubcategories)
 It checks whether a String is a valid subcategory in ICD-10-CM.
@@ -165,6 +192,16 @@ Parameters:
 &ensp;&ensp;`includeExtendedSubcategories` when it's true valid subcategories obtained by adding the 7th character to another code are considered as subcategories, otherwise they are not  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM subcategory, otherwise false
+```Java
+cm.isSubcategory("B95.1")
+//true
+cm.isSubcategory("B99")
+//false
+cm.isSubcategory("S12.000G")
+//true
+cm.isSubcategory("S12.000G",false)
+//false
+```
 
 ### boolean isSubcategory(String code)
 It checks whether a String is a valid subcategory in ICD-10-CM.
@@ -182,6 +219,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM subcategory, otherwise false
+```Java
+cm.isExtendedSubcategory("S12.000G")
+//true
+cm.isExtendedSubcategory("S12.000")
+//false
+```
 
 ### boolean isChapterOrBlock(String code)
 It checks whether a String is a valid chapter or block in ICD-10-CM.
@@ -190,6 +233,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM chapter or block, otherwise false
+```Java
+cm.isChapterOrBlock("L80-L99")
+//true
+cm.isChapterOrBlock("L99")
+//false
+```
 
 ### boolean isCategoryOrSubcategory(String code)
 It checks whether a String is a valid category or subcategory in ICD-10-CM.
@@ -198,6 +247,12 @@ Parameters:
 &ensp;&ensp;`code` is the String that must be checked  
 Returns:  
 &ensp;&ensp;true if code is a valid ICD-10-CM category or subcategory, otherwise false
+```Java
+cm.isCategoryOrSubcategory("B99")
+//true
+cm.isCategoryOrSubcategory("A00-B99")
+//false
+```
 
 ### String getDescription(String code, boolean prioritizeBlocks)
 Given a String that contains an ICD-10-CM code, it returns the description of said code.
@@ -209,6 +264,12 @@ Returns:
 &ensp;&ensp;the description of code  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getDescription("12")
+//"Diseases of the skin and subcutaneous tissue (L00-L99)"
+cm.getDescription("I70.501")
+//"Unspecified atherosclerosis of nonautologous biological bypass graft(s) of the extremities, right leg"
+```
 
 ### String getDescription(String code)
 Given a String that contains an ICD-10-CM code, it returns the description of said code.
@@ -234,6 +295,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes1" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getExcludes1("12")
+//[]
+cm.getExcludes1("I82.40")
+//[acute embolism and thrombosis of unspecified deep veins of distal lower extremity (I82.4Z-), acute embolism and thrombosis of unspecified deep veins of proximal lower extremity (I82.4Y-)]
+```
 
 ### ArrayList&lt;String&gt; getExcludes1(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes1" field of this code.
@@ -260,6 +327,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "excludes2" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getExcludes2("I82.40")
+//[]
+cm.getExcludes2("J34.81")
+//[gastrointestinal mucositis (ulcerative) (K92.81), mucositis (ulcerative) of vagina and vulva (N76.81), oral mucositis (ulcerative) (K12.3-)]
+```
 
 ### ArrayList&lt;String&gt; getExcludes2(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "excludes2" field of this code.
@@ -286,6 +359,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the data of the "includes" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "includes" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getIncludes("I82.40")
+//[]
+cm.getIncludes("J36")
+//[abscess of tonsil, peritonsillar cellulitis, quinsy]
+```
 
 ### ArrayList&lt;String&gt; getIncludes(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "includes" field of this code.
@@ -311,6 +390,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code, an empty ArrayList&lt;String&gt; if this code does not have an "inclusionTerm" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getInclusionTerm("A23")
+//[]
+cm.getInclusionTerm("J37.0")
+//[Catarrhal laryngitis, Hypertrophic laryngitis, Sicca laryngitis]
+```
 
 ### ArrayList&lt;String&gt; getInclusionTerm(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing the data of the "inclusionTerm" field of this code.
@@ -338,6 +423,16 @@ Returns:
 &ensp;&ensp;a String containing the data of the "sevenChrNote" field of this code, an empty String if this code does not have an "sevenChrNote" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getSevenChrNote("I82.40")
+//""
+cm.getSevenChrNote("M48.4")
+//"The appropriate 7th character is to be added to each code from subcategory M48.4:"
+cm.getSevenChrNote("R40.241")
+//""
+cm.getSevenChrNote("R40.241",true,false)
+//"The following appropriate 7th character is to be added to subcategory R40.24-:"
+```
 
 ### String getSevenChrNote(String code)
 Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "sevenChrNote" field of this code.
@@ -365,6 +460,16 @@ Returns:
 &ensp;&ensp;a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code, an empty HashMap&lt;String, String&gt; if this code does not have an "sevenChrDef" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getSevenChrDef("I82.40")
+//{}
+cm.getSevenChrDef("M48.4")
+//{A=initial encounter for fracture, S=sequela of fracture, D=subsequent encounter for fracture with routine healing, G=subsequent encounter for fracture with delayed healing}
+cm.getSevenChrDef("R40.241")
+//{}
+cm.getSevenChrDef("R40.241",true,false)
+//{0=unspecified time, 1=in the field [EMT or ambulance], 2=at arrival to emergency department, 3=at hospital admission, 4=24 hours or more after hospital admission}
+```
 
 ### HashMap&lt;String, String&gt; getSevenChrDef(String code)
 Given a String that contains an ICD-10-CM code, it returns a HashMap&lt;String, String&gt; containing the data of the "sevenChrDef" field of this code.
@@ -392,6 +497,23 @@ Returns:
 &ensp;&ensp;a String containing the data of the "useAdditionalCode" field of this code, an empty String if this code does not have an "useAdditionalCode" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getUseAdditionalCode("I82.41")
+//""
+cm.getUseAdditionalCode("R50.2")
+//"code for adverse effect, if applicable, to identify drug (T36-T50 with fifth or sixth character 5)"
+cm.getUseAdditionalCode("R65.20")
+//""
+cm.getUseAdditionalCode("R65.20",true,false)
+//"code to identify specific acute organ dysfunction, such as:
+// acute kidney failure (N17.-)
+// acute respiratory failure (J96.0-)
+// critical illness myopathy (G72.81)
+// critical illness polyneuropathy (G62.81)
+// disseminated intravascular coagulopathy [DIC] (D65)
+// encephalopathy (metabolic) (septic) (G93.41)
+// hepatic failure (K72.0-)"
+```
 
 ### String getUseAdditionalCode(String code)
 Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "useAdditionalCode" field of this code.
@@ -419,6 +541,16 @@ Returns:
 &ensp;&ensp;a String containing the data of the "codeFirst" field of this code, an empty String if this code does not have an "codeFirst" field  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getCodeFirst("I82.41")
+//""
+cm.getCodeFirst("R68.13")
+//"confirmed diagnosis, if known"
+cm.getCodeFirst("S04.01")
+//""
+cm.getCodeFirst("S04.01",true,false)
+//"any associated intracranial injury (S06.-)"
+```
 
 ### String getCodeFirst(String code)
 Given a String that contains an ICD-10-CM code, it returns a String containing the data of the "codeFirst" field of this code.
@@ -435,7 +567,7 @@ Throws:
 
 ### String getFullData(String code,boolean searchInAncestors, boolean prioritizeBlocks)
 Given a String that contains an ICD-10-CM code, it returns a String containing all the available data of the code.
-The empty fields are omitted from the String, except for the list of children.
+The empty fields are omitted from the String, except for the list of children (see the examples below).
 
 Parameters:  
 &ensp;&ensp;`code` is the ICD-10-CM code  
@@ -445,6 +577,29 @@ Returns:
 &ensp;&ensp; a String containing all the available data of the code  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getFullData("I82.41")
+//"Name:
+// I82.41
+// Description:
+// Acute embolism and thrombosis of femoral vein
+// Parent:
+// I82.4
+// inclusion term:
+// Acute embolism and thrombosis of common femoral vein
+// Acute embolism and thrombosis of deep femoral vein
+// Children:
+// I82.411, I82.412, I82.413, I82.419"
+cm.getFullData("C8401")
+//"Name:
+// C84.01
+// Description:
+// Mycosis fungoides, lymph nodes of head, face, and neck
+// Parent:
+// C84.0
+// Children:
+// None"
+```
 
 ### String getFullData(String code)
 Given a String that contains an ICD-10-CM code, it returns a String containing all the available data of the code.
@@ -470,6 +625,12 @@ Returns:
 &ensp;&ensp;a String containing the parent of the code, or an empty String if it does not have a parent  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getParent("I70.501")
+//"I70.50"
+cm.getParent("12")
+//""
+```
 
 ### String getParent(String code)
 Given a String that contains an ICD-10-CM code, it returns a String containing its parent in the ICD-10-CM classification.
@@ -495,6 +656,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; of strings containing its children, or an empty ArrayList&lt;String&gt; if it does not have any children  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getChildren("12")
+//[L00-L08, L10-L14, L20-L30, L40-L45, L49-L54, L55-L59, L60-L75, L76, L80-L99]
+cm.getChildren("I70.501")
+//[]
+```
 
 ### ArrayList&lt;String&gt; getChildren(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing its children in the ICD-10-CM classification.
@@ -520,6 +687,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the ancestors of code  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getAncestors("S14.109S")
+//[S14.109, S14.10, S14.1, S14, S10-S19, 19]
+cm.getAncestors("7")
+//[]
+```
 
 ### ArrayList&lt;String&gt; getAncestors(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its ancestors in the ICD-10-CM classification.
@@ -545,6 +718,12 @@ Returns:
 &ensp;&ensp;an ArrayList&lt;String&gt; containing the descendants of code  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getDescendants("G93")
+//[G93.0, G93.1, G93.2, G93.3, G93.4, G93.40, G93.41, G93.49, G93.5, G93.6, G93.7, G93.8, G93.81, G93.82, G93.89, G93.9]
+cm.getDescendants("S14.109S")
+//[]
+```
 
 ### ArrayList&lt;String&gt; getDescendants(String code)
 Given a String that contains an ICD-10-CM code, it returns an ArrayList&lt;String&gt; containing all its descendants in the ICD-10-CM classification.
@@ -571,6 +750,16 @@ Returns:
 &ensp;&ensp;true if a is one of the ancestors of b, false otherwise  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if a or b are not a valid ICD-10-CM code
+```Java
+cm.isAncestor("18","R01.0")
+//true
+cm.isAncestor("K00-K14","M31")
+//false
+cm.isAncestor("B99","B99")
+//false
+cm.isAncestor("B99","B99",true,false)
+//true
+```
 
 ### boolean isAncestor(String a, String b)
 It checks whether a code (`a`) is one of the ancestors of another code (`b`). A code is never an ancestor of itself.
@@ -597,6 +786,12 @@ Returns:
 &ensp;&ensp;true if a is one of the descendants of b, false otherwise  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if a or b are not a valid ICD-10-CM code
+```Java
+cm.isDescendant("R01.0","18")
+//true
+cm.isDescendant("M31","K00-K14")
+//false
+```
 
 ### boolean isDescendant(String a, String b)
 It checks whether a code (`a`) is one of the descendants of another code (`b`). A code is never a descendant of itself.
@@ -623,6 +818,12 @@ Returns:
 &ensp;&ensp;the nearest common ancestor of a and b if it exists, an empty string otherwise  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if a or b are not a valid ICD-10-CM code
+```Java
+cm.getNearestCommonAncestor("H28","H25.1")
+//"H25-H28"
+cm.getNearestCommonAncestor("K35","E21.0")
+//""
+```
 
 ### String getNearestCommonAncestor(String a, String b)
 Given two ICD-10-CM codes `a` and `b`, it returns their nearest common ancestor in the ICD-10-CM classification (or an empty string if they don't have a nearest common ancestor).
@@ -647,6 +848,12 @@ Returns:
 &ensp;&ensp;true if code is a leaf in the ICD-10-CM classification (that is, if it has no children), false otherwise  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.isLeaf("12")
+//false
+cm.isLeaf("I70.501")
+//true
+```
 
 ### boolean isLeaf(String code)
 Given a String that contains an ICD-10-CM code, it checks whether that code is a leaf in the ICD-10 classification.
@@ -673,6 +880,12 @@ It returns an ArrayList&lt;String&gt; that contains all the codes in the ICD-10-
 
 Returns:  
 &ensp;&ensp;the list of all the codes in the ICD-10-CM classification, ordered as in a depth-first pre-order visit, in the format with the dot
+```Java
+cm.getAllCodes()
+//[1, A00-A09, A00, A00.0, A00.1, A00.9, A01, A01.0, A01.00, A01.01, ...
+cm.getAllCodes(false)
+//[1, A00-A09, A00, A000, A001, A009, A01, A010, A0100, A0101, ...
+```
 
 ### int getIndex(String code)
 It returns the index of a particular code in the list returned by `getAllCodes`.
@@ -683,6 +896,12 @@ Returns:
 &ensp;&ensp;the index of code in the list returned by getAllCodes  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.getIndex("P00")
+//27735
+cm.getAllCodes().get(27735)
+//"P00"
+```
 
 ### String removeDot(String code)
 Given an ICD-10-CM code, it returns the same code in the format without the dot.
@@ -693,6 +912,14 @@ Returns:
 &ensp;&ensp;the same code in the format without the dot  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.removeDot("C84.Z0")
+//"C84Z0"
+cm.removeDot("C84Z0")
+//"C84Z0"
+cm.removeDot("K00-K14")
+//"K00-K14"
+```
 
 ### String addDot(String code)
 Given an ICD-10-CM code, it returns the same code in the format with the dot.
@@ -703,6 +930,14 @@ Returns:
 &ensp;&ensp;the same code in the format with the dot  
 Throws:  
 &ensp;&ensp;`IllegalArgumentException` if code is not a valid ICD-10-CM code
+```Java
+cm.addDot("C84Z0")
+//"C84.Z0"
+cm.addDot("C84.Z0")
+//"C84.Z0"
+cm.addDot("K00-K14")
+//"K00-K14"
+```
 
 ## Conclusion
 This should be everything you need to know about the SimpleICD10CM-Java-edition library. Please contact me if you find any mistake, bug, missing feature or anything else that could be improved or made easier to comprehend, both in this documentation and in the library itself. You can also contact me if you need any help using this library, but I may not be able to help with questions about the ICD-10-CM classification itself. This library currently only support the January 2021 release of ICD-10-CM: let me know if you'd like me to implement the ability to switch between different versions of ICD-10-CM, and also tell me which release or releases you are interested in.
