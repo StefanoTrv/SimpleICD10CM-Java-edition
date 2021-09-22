@@ -68,7 +68,7 @@ A simple Java library for ICD-10-CM codes
 * [Conclusion](#conclusion)
 
 ## Release notes
-`none yet`
+* **1.0.0**: Inital release
 
 ## Introduction
 The objective of this library is to provide a simple instrument for dealing with **ICD-10-CM** codes in Java. It provides ways to check whether a code exists, find its ancestors and descendants, see the data associated with it, including its description, and much more.  
@@ -78,6 +78,9 @@ If you are looking for a Python version of this project, you can check the [simp
 The data used in this library was taken from the websites of the CDC and of the CMS. This library currently uses the **January 2021 release of ICD-10-CM**.
 
 All the classes in this library are contained in the package "`it.trvi.simpleicd10`".
+
+## Setup
+You can download the jar containing the most recent recent version of this library from the [releases page on Github](https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/releases).
 
 ## The format of the codes
 The codes of subcategories can be written in two different ways: with a dot (for example "I13.1") and with no dot (for example "I131"). The methods in this library can receive as input codes in both these formats. The codes returned by the functions will always be in the format with the dot.  

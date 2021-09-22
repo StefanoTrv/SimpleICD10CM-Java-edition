@@ -1,4 +1,4 @@
-package it.trvi.simpleicd10;
+package it.trvi.simpleicd10cm;
 import it.trvi.easyxml.*;
 
 import java.io.IOException;
