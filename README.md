@@ -75,6 +75,8 @@ The data used in this library was taken from the websites of the CDC and of the 
 
 All the classes in this library are contained in the package "`it.trvi.simpleicd10cm`".
 
+SimpleICD10CM-Java-edition uses the library [EasyXML](https://github.com/StefanoTrv/EasyXML) to parse the XML code that contains the data of the ICD-10-CM classification.
+
 ## Setup
 You can download the jar containing the most recent recent version of this library from the [releases page on Github](https://github.com/StefanoTrv/SimpleICD10CM-Java-edition/releases).
 
